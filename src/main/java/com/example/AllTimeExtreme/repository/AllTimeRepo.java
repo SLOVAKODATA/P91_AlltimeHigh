@@ -11,11 +11,9 @@ import com.example.AllTimeExtreme.model.All_time_extremy;
 public interface AllTimeRepo extends CrudRepository<All_time_extremy, Integer> {
 	
 	@Query(value="SELECT ID_CENNEHO_PAPIERA, MAX(HIGH) AS all_time_high, MIN(LOW) AS all_time_low FROM graf.ramec_2_idcpm_:modulo GROUP BY id_cenneho_papiera ", nativeQuery=true)
-	public List<All_time_extremy> vratVsetkyExtremy(Integer modulo);
-	
-	
-	//	public List<All_time_extremy> vratVsetkyExtremy(Integer modulo, Integer idcp, String tabulka,
-//			Pageable pageable);
-	
+	public List<All_time_extremy> vratVsetkyExtremyHodinovychRamcov(Integer modulo);
+
+	@Query(value="SELECT ID_CENNEHO_PAPIERA, MAX(HIGH) AS all_time_high, MIN(LOW) AS all_time_low FROM graf.ramec_5_idcpm_:modulo GROUP BY id_cenneho_papiera ", nativeQuery=true)
+	public List<All_time_extremy> vratVsetkyExtremyTyznovychRamcov(Integer modulo);
 
 }

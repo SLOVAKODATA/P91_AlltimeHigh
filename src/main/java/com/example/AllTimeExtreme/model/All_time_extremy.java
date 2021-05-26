@@ -9,6 +9,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Entity(name="ALL_TIME_EXTREMY")
+//@Entity(name="all_time_extremy_debugvymaz")
 @Table
 @Data
 @NoArgsConstructor

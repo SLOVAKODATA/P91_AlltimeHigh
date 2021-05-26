@@ -8,12 +8,12 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-@Entity
+@Entity(name="CENNY_PAPIER")
 @Table
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class Cenny_Papier {
+public class Cenny_papier {
 
 	@Id
 	private Integer id_cenneho_papiera;

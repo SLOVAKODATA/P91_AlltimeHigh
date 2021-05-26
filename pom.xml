@@ -10,7 +10,7 @@
 	</parent>
 	<groupId>com.example</groupId>
 	<artifactId>AllTimeExtreme</artifactId>
-	<version>v2-Patch</version>
+	<version>v3-Patch-StockSplits</version>
 	<name>AllTimeExtreme</name>
 	<description>Demo project for Spring Boot</description>
 

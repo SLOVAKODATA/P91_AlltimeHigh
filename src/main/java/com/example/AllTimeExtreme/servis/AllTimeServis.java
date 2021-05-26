@@ -1,9 +1,9 @@
 package com.example.AllTimeExtreme.servis;
 
-import com.example.AllTimeExtreme.konstanty.CasovyRamecKonstanty;
 import com.example.AllTimeExtreme.konstanty.RiadneHodnotyCennehoPapieraKonstanty;
 import com.example.AllTimeExtreme.model.All_time_extremy;
 import com.example.AllTimeExtreme.nastavenia.NastaveniaXML;
+import com.example.AllTimeExtreme.repository.SplitCennehoPapieraRealizaciaRepo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Service;
@@ -22,6 +22,9 @@ public class AllTimeServis {
 	
 	@Autowired
 	CennyPapierRepo cpRepo;
+
+	@Autowired
+	SplitCennehoPapieraRealizaciaRepo splityRepo;
 	
 
 	/**
@@ -60,28 +63,63 @@ public class AllTimeServis {
 			// pozrieme sa, ci dany denny papier nemal extremy uz v minulosti:
 			All_time_extremy tyzdnovyExtremCennehoPapiera = hmExtremy.get(extrem.getId_cenneho_papiera());
 
-			// high
-			Double maxPredvolenehoRamca = extrem.getAll_time_high();
-			Double maxTyzdnovehoRamca = tyzdnovyExtremCennehoPapiera.getAll_time_high();
-			if ((maxPredvolenehoRamca!=null)&&(maxTyzdnovehoRamca!=null)&&(jeRiadnaHodnota(maxPredvolenehoRamca))) {
-				if (maxTyzdnovehoRamca>maxPredvolenehoRamca) {
-					extrem.setAll_time_high(maxTyzdnovehoRamca);
-				}
+			if (tyzdnovyExtremCennehoPapiera!=null) {
+				vyriesHigh(extrem, tyzdnovyExtremCennehoPapiera);
+				vyriesLow(extrem, tyzdnovyExtremCennehoPapiera);
 			}
 
-			// low
-			Double minPredvolenehoRamca = extrem.getAll_time_low();
-			Double minTyzdnovehoRamca = tyzdnovyExtremCennehoPapiera.getAll_time_low();
-			if ((minPredvolenehoRamca!=null)&&(minTyzdnovehoRamca!=null)&&(jeRiadnaHodnota(minPredvolenehoRamca))) {
-				if (minTyzdnovehoRamca<minPredvolenehoRamca) {
-					extrem.setAll_time_low(minTyzdnovehoRamca);
-				}
-			}
-			if (!jeRiadnaHodnota(extrem.getAll_time_low())) {
-				extrem.setAll_time_low(null);
+		}
+
+		return extremyPredvolenychRamcov;
+
+	}
+
+	private void vyriesHigh(All_time_extremy extrem, All_time_extremy tyzdnovyExtremCennehoPapiera) {
+		// high
+		Double maxPredvolenehoRamca = extrem.getAll_time_high();
+		Double maxTyzdnovehoRamca = tyzdnovyExtremCennehoPapiera.getAll_time_high();
+
+		// ak je dnes nahodou realizovany stock split, tak sa v ten den neustale (kazdym spustenim tohto programu) meraju najnovsie max/min hodnoty
+		if (jeDnesKalkulacnyDenStockSplitu(extrem.getId_cenneho_papiera())) {
+			System.out.println("Dnesny den sa pre dany ticker ("+ extrem.getId_cenneho_papiera()+") meraju rozsahy High/Low.");
+			extrem.setAll_time_high(maxTyzdnovehoRamca);
+			return;
+		}
+
+		// toto je bezny priprav v dni, kedy nemame stock split
+		if ((maxPredvolenehoRamca!=null)&&(maxTyzdnovehoRamca!=null)&&(jeRiadnaHodnota(maxPredvolenehoRamca))) {
+			if (maxTyzdnovehoRamca>maxPredvolenehoRamca) {
+				extrem.setAll_time_high(maxTyzdnovehoRamca);
 			}
 		}
-		return extremyPredvolenychRamcov;
+	}
+
+	private void vyriesLow(All_time_extremy extrem, All_time_extremy tyzdnovyExtremCennehoPapiera) {
+		// low
+		Double minPredvolenehoRamca = extrem.getAll_time_low();
+		Double minTyzdnovehoRamca = tyzdnovyExtremCennehoPapiera.getAll_time_low();
+
+		// ak je dnes nahodou realizovany stock split, tak sa v ten den neustale (kazdym spustenim tohto programu) meraju najnovsie max/min hodnoty
+		if (jeDnesKalkulacnyDenStockSplitu(extrem.getId_cenneho_papiera())) {
+			System.out.println("Dnesny den sa pre dany ticker ("+ extrem.getId_cenneho_papiera()+") meraju rozsahy High/Low.");
+			extrem.setAll_time_low(minTyzdnovehoRamca);
+			return;
+		}
+
+		// toto je bezny priprav v dni, kedy nemame stock split
+		if ((minPredvolenehoRamca!=null)&&(minTyzdnovehoRamca!=null)&&(jeRiadnaHodnota(minPredvolenehoRamca))) {
+			if (minTyzdnovehoRamca<minPredvolenehoRamca) {
+				extrem.setAll_time_low(minTyzdnovehoRamca);
+			}
+		}
+
+		if (!jeRiadnaHodnota(extrem.getAll_time_low())) {
+			extrem.setAll_time_low(null);
+		}
+	}
+
+	private boolean jeDnesKalkulacnyDenStockSplitu(Integer idcp) {
+		return (splityRepo.dnesnaRealizaciaStockSplitu(idcp)!=null);
 	}
 
 	/**
@@ -89,8 +127,8 @@ public class AllTimeServis {
 	 * @param extremyTyzdennychRamcov
 	 * @return
 	 */
-	private HashMap<Integer,All_time_extremy> namapujExtremyTyzdnovychRamcovNaHasmapu(List<All_time_extremy> extremyTyzdennychRamcov) {
-		HashMap<Integer,All_time_extremy> retVal = new HashMap<Integer,All_time_extremy>();
+	private HashMap<Integer, All_time_extremy> namapujExtremyTyzdnovychRamcovNaHasmapu(List<All_time_extremy> extremyTyzdennychRamcov) {
+		HashMap<Integer, All_time_extremy> retVal = new HashMap<Integer, All_time_extremy>();
 		for (All_time_extremy extrem: extremyTyzdennychRamcov) {
 			retVal.put(extrem.getId_cenneho_papiera(), extrem);
 		}
@@ -110,15 +148,3 @@ public class AllTimeServis {
 	}
 
 }
-
-// stary sposob:
-//		NastaveniaXML nastavenia = NastaveniaXML.getInstance();
-//		all_time_high je subquery
-//		zoradujem podla subquery
-//		Pageable pageable = PageRequest.of(0, 3, Sort.Direction.DESC, "all_time_high");
-
-//		for(Integer modulo=0; modulo<32; modulo++) {
-//			System.out.println("spracuvam modulo: "+modulo);
-//			allRepo.saveAll(allRepo.vratVsetkyExtremy(modulo, "all_time_high heloo DESCa"));
-//			allRepo.vratVsetkyExtremy(modulo, 4775, "graf.ramec_4_idcpm_"+modulo, pageable).forEach(System.out::println);
-//		}
